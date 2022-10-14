@@ -1,39 +1,52 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useEffect } from "react";
+import { View, StyleSheet, FlatList, Text } from "react-native";
+import { getRealm } from "../databases/realm";
 
 import Task from "./Task";
 
-
 const TaskList = (props) => {
   const { items } = props;
+  const { handleRefresh } = props;
+  
+  const fetchTasks = async() => {
+    const realm = await getRealm();
+    
+    try {
+      const response = realm.objects("Task").toJSON();
+      setTasks(response);
+    } finally {
+      handleRefresh();
+    }
+  }
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
 
   return (
     <View style={styles.tasksWrapper}>
-      <Text style={styles.sectionTitle}>Tarefas do dia</Text>
-      <View style={styles.items}>
-        {
-          items.map((item, index) => {
-            return (
-              <Task key={index} text={item} />
-            )
-          })
-        }
-      </View>
+      {
+        items ?
+        <FlatList
+          data={items}
+          renderItem={
+            ({ item: task, index }) => <Task key={index} text={task?.name} />
+          }
+          keyExtractor={task => task.id}
+        />
+        : <Text>Nenhuma tarefa definida.</Text>
+      }
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   tasksWrapper: {
-    paddingTop: 80,
+    flex: 8,
     paddingHorizontal: 20,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
   items: {
-    marginTop: 30,
+    
   },
 });
 
